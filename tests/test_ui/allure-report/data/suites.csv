@@ -1,0 +1,3 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","1","test_function[test2@mail.ru-User25-qwertyu1]","tests.test_ui","Sun Oct 12 22:13:57 MSK 2025","passed","Sun Oct 12 22:13:57 MSK 2025","","test_first","",""
+"","0","test_function[test25@mail.ru-User2566-qwertyu1]","tests.test_ui","Sun Oct 12 22:13:57 MSK 2025","passed","Sun Oct 12 22:13:57 MSK 2025","","test_first","",""
