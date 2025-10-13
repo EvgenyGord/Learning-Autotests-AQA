@@ -37,7 +37,7 @@ def browser():
 
 @pytest.fixture
 def base_url():
-    return "http://95.182.122.183"
+    return "http://31.59.174.108"
 
 
 
@@ -59,7 +59,7 @@ def registration_data_with_params(request):
 @pytest.fixture
 def registration_data():
     return {
-        "email": "test2@mail.ru",
+        "email": "test_user123@mail.ru",
         "name": "User25",
         "password": "qwertyui"
     }
@@ -119,3 +119,8 @@ def faker_data():
 #                 print(f"не удалить файл {file_path}: {e}")
 #     else:
 #         os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+
+
+def pytest_runtest_setup(item):
+    # Этот хук будет вызван перед запуском КАЖДОГО теста
+    print(f">>> Начинается выполнение теста: {item.name}")
