@@ -1,1 +1,1 @@
-# Изучение автотестов (Python+Selenium)
+# Автотесты на Python+Selenium (Обучение)
