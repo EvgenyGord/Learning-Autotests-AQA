@@ -2,55 +2,60 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "selenium-tests:latest"
-        WORKSPACE_DIR = "${env.WORKSPACE}"
+        ALLURE_RESULTS = "allure-results"
+        SCREENSHOTS = "screenshots"
+        PUBLIC_REPORT = "public"
     }
 
     stages {
+
         stage('Preparation') {
             steps {
                 echo 'Подготовка директорий для отчетов и скриншотов'
-                bat 'if not exist allure-results mkdir allure-results'
-                bat 'if not exist screenshots mkdir screenshots'
+                bat "if not exist ${env.ALLURE_RESULTS} mkdir ${env.ALLURE_RESULTS}"
+                bat "if not exist ${env.SCREENSHOTS} mkdir ${env.SCREENSHOTS}"
+            }
+        }
+
+        stage('Prepare Dockerfile') {
+            steps {
+                echo 'Копирование Dockerfile в workspace Jenkins'
+                // Если Dockerfile в корне репозитория, этот шаг можно убрать
+                // Иначе путь нужно указать реальный
+                bat 'copy Dockerfile .'
             }
         }
 
         stage('UI Tests in Docker') {
             steps {
-                script {
-                    echo 'Сборка Docker образа для тестов'
+                echo 'Сборка Docker образа для тестов'
+                bat 'docker build -t selenium-tests:latest .'
 
-                    // Собираем Docker образ
-                    bat "docker build -t ${DOCKER_IMAGE} ."
-
-                    echo 'Запуск тестов в контейнере'
-                    // Запуск контейнера с монтированием текущей папки
-                    bat """
-                    docker run --rm ^
-                    -v ${WORKSPACE_DIR}\\allure-results:/app/allure-results ^
-                    -v ${WORKSPACE_DIR}\\screenshots:/app/screenshots ^
-                    ${DOCKER_IMAGE}
-                    """
-                }
+                echo 'Запуск тестов в Docker контейнере'
+                bat """
+                    docker run --name selenium-test-container-${BUILD_ID} -v %cd%\\${env.ALLURE_RESULTS}:/app/${env.ALLURE_RESULTS} selenium-tests:latest
+                """
             }
         }
 
         stage('Generate Allure Report') {
             steps {
                 echo 'Генерация Allure отчетов'
-                bat 'allure generate allure-results -o allure-report --clean'
+                bat "allure generate ${env.ALLURE_RESULTS} -o allure-report --clean"
             }
         }
 
         stage('Publish Report') {
             steps {
                 echo 'Публикация HTML отчета в Jenkins'
-                bat 'if not exist public mkdir public'
-                bat 'xcopy /E /I /Y allure-report public\\'
+                bat "if not exist ${env.PUBLIC_REPORT} mkdir ${env.PUBLIC_REPORT}"
+                bat "xcopy /E /I /Y allure-report ${env.PUBLIC_REPORT}\\"
                 publishHTML(target: [
-                    reportDir: 'public',
+                    reportName: 'Test Report',
+                    reportDir: env.PUBLIC_REPORT,
                     reportFiles: 'index.html',
-                    reportName: 'Test Report'
+                    keepAll: true,
+                    alwaysLinkToLastBuild: true
                 ])
             }
         }
@@ -59,8 +64,14 @@ pipeline {
     post {
         always {
             echo 'Очистка ресурсов Docker'
-            bat 'docker container prune -f || echo "Нет контейнеров для удаления"'
-            bat 'docker image prune -f || echo "Нет неиспользуемых образов"'
+            bat "docker rm -f selenium-test-container-${BUILD_ID} || echo \"Контейнеров нет\""
+            bat "docker image prune -f || echo \"Нет неиспользуемых образов\""
+        }
+        success {
+            echo 'Пайплайн успешно завершён'
+        }
+        failure {
+            echo 'Пайплайн завершился с ошибками'
         }
     }
 }
