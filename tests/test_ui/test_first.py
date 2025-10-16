@@ -56,9 +56,12 @@ def test_positive_registration(browser, base_url, wait, registration_data):
 
     with allure.step('Зарегистрироваться'):
         browser.find_element(By.CSS_SELECTOR, ".space-y-5>button").click()
-    time.sleep(5)
+    #time.sleep(5)
     with allure.step("Ожидаем страницу регистрации/авторизации"):
-        alert = browser.find_element(By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)")
+        #alert = browser.find_element(By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)")
+        alert = WebDriverWait(browser, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)"))
+        )
         if alert.get_attribute("textContent") == "Вы успешно зарегистрировались. Теперь вы можете войти.":
             with allure.step("Ожидаем страницу авторизации"):
                 wait.until(EC.url_to_be(f"{base_url}/login"))
@@ -128,9 +131,11 @@ def test_positive_registration_faker(browser, base_url, wait, faker_data):
 
     with allure.step('Зарегистрироваться'):
         browser.find_element(By.CSS_SELECTOR, ".space-y-5>button").click()
-    time.sleep(5)
+
     with allure.step("Ожидаем страницу регистрации/авторизации"):
-        alert = browser.find_element(By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)")
+        alert = WebDriverWait(browser, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)"))
+        )
         if alert.get_attribute("textContent") == "Вы успешно зарегистрировались. Теперь вы можете войти.":
             with allure.step("Ожидаем страницу авторизации"):
                 wait.until(EC.url_to_be(f"{base_url}/login"))
@@ -188,9 +193,10 @@ def test_positive_registration_with_fixture_params(browser, base_url, wait, regi
     with allure.step('Зарегистрироваться'):
         browser.find_element(By.CSS_SELECTOR, ".space-y-5>button").click()
 
-    time.sleep(5)
     with allure.step("Ожидаем страницу регистрации/авторизации"):
-        alert = browser.find_element(By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)")
+        alert = WebDriverWait(browser, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, ".Toastify__toast-body>div:nth-child(2)"))
+        )
         if alert.get_attribute("textContent") == "Вы успешно зарегистрировались. Теперь вы можете войти.":
             with allure.step("Ожидаем страницу авторизации"):
                 wait.until(EC.url_to_be(f"{base_url}/login"))
