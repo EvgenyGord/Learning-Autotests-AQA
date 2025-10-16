@@ -4,7 +4,7 @@ pipeline {
     environment {
         ALLURE_RESULTS = "allure-results"
         SCREENSHOTS = "screenshots"
-        PUBLIC_REPORT = "public"
+        DOCKER_IMAGE = "selenium-tests:latest"
     }
 
     stages {
@@ -12,51 +12,60 @@ pipeline {
         stage('Preparation') {
             steps {
                 echo 'Подготовка директорий для отчетов и скриншотов'
-                bat "if not exist ${env.ALLURE_RESULTS} mkdir ${env.ALLURE_RESULTS}"
-                bat "if not exist ${env.SCREENSHOTS} mkdir ${env.SCREENSHOTS}"
+                bat "if not exist ${ALLURE_RESULTS} mkdir ${ALLURE_RESULTS}"
+                bat "if not exist ${SCREENSHOTS} mkdir ${SCREENSHOTS}"
             }
         }
 
-        stage('Prepare Dockerfile') {
-            steps {
-                echo 'Копирование Dockerfile в workspace Jenkins'
-                // Если Dockerfile в корне репозитория, этот шаг можно убрать
-                // Иначе путь нужно указать реальный
-                bat 'copy Dockerfile .'
-            }
-        }
-
-        stage('UI Tests in Docker') {
+        stage('Build Docker Image') {
             steps {
                 echo 'Сборка Docker образа для тестов'
-                bat 'docker build -t selenium-tests:latest .'
+                // Указываем Jenkins использовать текущую рабочую директорию проекта
+                dir("${env.WORKSPACE}") {
+                    bat "docker build -t ${DOCKER_IMAGE} ."
+                }
+            }
+        }
 
-                echo 'Запуск тестов в Docker контейнере'
-                bat """
-                    docker run --name selenium-test-container-${BUILD_ID} -v %cd%\\${env.ALLURE_RESULTS}:/app/${env.ALLURE_RESULTS} selenium-tests:latest
-                """
+        stage('Run UI Tests in Docker') {
+            steps {
+                echo 'Запуск UI тестов внутри Docker'
+                dir("${env.WORKSPACE}") {
+                    bat """
+                    docker run --rm ^
+                        -v %CD%\\${ALLURE_RESULTS}:/app/${ALLURE_RESULTS} ^
+                        -v %CD%\\${SCREENSHOTS}:/app/${SCREENSHOTS} ^
+                        ${DOCKER_IMAGE} ^
+                        pytest --alluredir=${ALLURE_RESULTS}
+                    """
+                }
             }
         }
 
         stage('Generate Allure Report') {
             steps {
-                echo 'Генерация Allure отчетов'
-                bat "allure generate ${env.ALLURE_RESULTS} -o allure-report --clean"
+                echo 'Генерация Allure отчета'
+                dir("${env.WORKSPACE}") {
+                    bat "allure generate ${ALLURE_RESULTS} -o allure-report --clean"
+                }
             }
         }
 
         stage('Publish Report') {
             steps {
                 echo 'Публикация HTML отчета в Jenkins'
-                bat "if not exist ${env.PUBLIC_REPORT} mkdir ${env.PUBLIC_REPORT}"
-                bat "xcopy /E /I /Y allure-report ${env.PUBLIC_REPORT}\\"
-                publishHTML(target: [
-                    reportName: 'Test Report',
-                    reportDir: env.PUBLIC_REPORT,
-                    reportFiles: 'index.html',
-                    keepAll: true,
-                    alwaysLinkToLastBuild: true
-                ])
+                dir("${env.WORKSPACE}") {
+                    bat "if not exist public mkdir public"
+                    bat "xcopy /E /I /Y allure-report public\\"
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'public',
+                        reportFiles: 'index.html',
+                        reportName: 'Allure Report'
+                    ])
+                }
             }
         }
     }
@@ -64,14 +73,11 @@ pipeline {
     post {
         always {
             echo 'Очистка ресурсов Docker'
-            bat "docker rm -f selenium-test-container-${BUILD_ID} || echo \"Контейнеров нет\""
-            bat "docker image prune -f || echo \"Нет неиспользуемых образов\""
-        }
-        success {
-            echo 'Пайплайн успешно завершён'
+            bat "docker container prune -f || echo 'Нет контейнеров для удаления'"
+            bat "docker image prune -f || echo 'Нет неиспользуемых образов'"
         }
         failure {
-            echo 'Пайплайн завершился с ошибками'
+            echo 'Пайплайн завершился с ошибкой'
         }
     }
 }
