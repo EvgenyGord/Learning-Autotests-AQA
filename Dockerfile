@@ -20,12 +20,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Сборка Docker образа для тестов'
-                // Указываем Jenkins использовать текущую рабочую директорию проекта
-                dir("${env.WORKSPACE}") {
-                    bat "docker build -t ${DOCKER_IMAGE} ."
-                }
+                bat 'docker build -t selenium-tests:latest -f "C:\\qaRoad\\my_selenium_test\\Dockerfile" "C:\\qaRoad\\my_selenium_test"'
             }
         }
+
 
         stage('Run UI Tests in Docker') {
             steps {
