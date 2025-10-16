@@ -4,15 +4,42 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from faker import Faker
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.chrome.options import Options
+import tempfile
+import shutil
 
 
 @pytest.fixture
 def browser():
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    driver.maximize_window()
+    # создаём временную папку для пользовательских данных
+    user_data_dir = tempfile.mkdtemp()
+
+    options = Options()
+    options.add_argument(f"--user-data-dir={user_data_dir}")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")  # если не нужен GUI
+    options.add_argument("--disable-gpu")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
     yield driver
-    # тест побежал, что-то делает, что-то сделал
+
     driver.quit()
+    shutil.rmtree(user_data_dir)  # удаляем временную папку после теста
+
+
+# @pytest.fixture
+# def browser():
+#     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+#     driver.maximize_window()
+#     yield driver
+#     # тест побежал, что-то делает, что-то сделал
+#     driver.quit()
+
+
+
+
 
 
 # driver = webdriver.Chrome()
