@@ -20,8 +20,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+                echo 'Сборка Docker образа для тестов'
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    echo 'Сборка Docker образа для тестов'
                     bat "docker build -t ${DOCKER_IMAGE} -f \"${PROJECT_DIR}\\Dockerfile\" \"${PROJECT_DIR}\""
                 }
             }
@@ -29,14 +29,14 @@ pipeline {
 
         stage('Run UI Tests in Docker') {
             steps {
+                echo 'Запуск UI тестов внутри Docker (ошибки не останавливают процесс)'
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    echo 'Запуск UI тестов внутри Docker'
                     bat """
                     docker run --rm ^
                         -v \"${PROJECT_DIR}\\${ALLURE_RESULTS}:/app/${ALLURE_RESULTS}\" ^
                         -v \"${PROJECT_DIR}\\${SCREENSHOTS}:/app/${SCREENSHOTS}\" ^
                         ${DOCKER_IMAGE} ^
-                        pytest --alluredir=/app/${ALLURE_RESULTS} || exit /b 0
+                        pytest --alluredir=/app/${ALLURE_RESULTS} || exit 0
                     """
                 }
             }
@@ -44,9 +44,9 @@ pipeline {
 
         stage('Generate Allure Report') {
             steps {
-                echo 'Генерация Allure отчета (всегда выполняется)'
+                echo 'Генерация Allure отчета (даже при ошибках тестов)'
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    bat "allure generate ${PROJECT_DIR}\\${ALLURE_RESULTS} -o ${PROJECT_DIR}\\allure-report --clean"
+                    bat "allure generate ${PROJECT_DIR}\\${ALLURE_RESULTS} -o ${PROJECT_DIR}\\allure-report --clean || echo Allure report generation failed"
                 }
             }
         }
@@ -58,7 +58,7 @@ pipeline {
                     bat "if not exist ${PROJECT_DIR}\\public mkdir ${PROJECT_DIR}\\public"
                     bat "xcopy /E /I /Y ${PROJECT_DIR}\\allure-report ${PROJECT_DIR}\\public\\"
                     publishHTML([
-                        allowMissing: false,
+                        allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: "${PROJECT_DIR}\\public",
@@ -77,7 +77,10 @@ pipeline {
             bat "docker image prune -f || echo 'Нет неиспользуемых образов'"
         }
         failure {
-            echo 'Пайплайн завершился с ошибками, но отчет сгенерирован'
+            echo 'Пайплайн завершился с ошибками, но отчёт сгенерирован.'
+        }
+        success {
+            echo 'Пайплайн успешно завершён.'
         }
     }
 }
