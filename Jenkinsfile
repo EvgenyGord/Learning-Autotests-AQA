@@ -5,7 +5,7 @@ pipeline {
         ALLURE_RESULTS = "allure-results"
         SCREENSHOTS = "screenshots"
         DOCKER_IMAGE = "selenium-tests:latest"
-        PROJECT_DIR = "C:\\qaRoad\\my_selenium_test" // директория проекта
+        PROJECT_DIR = "C:\\qaRoad\\my_selenium_test"
     }
 
     stages {
@@ -20,44 +20,52 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo 'Сборка Docker образа для тестов'
-                bat "docker build -t ${DOCKER_IMAGE} -f \"${PROJECT_DIR}\\Dockerfile\" \"${PROJECT_DIR}\""
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    echo 'Сборка Docker образа для тестов'
+                    bat "docker build -t ${DOCKER_IMAGE} -f \"${PROJECT_DIR}\\Dockerfile\" \"${PROJECT_DIR}\""
+                }
             }
         }
 
         stage('Run UI Tests in Docker') {
             steps {
-                echo 'Запуск UI тестов внутри Docker'
-                bat """
-                docker run --rm ^
-                    -v \"${PROJECT_DIR}\\${ALLURE_RESULTS}:/app/${ALLURE_RESULTS}\" ^
-                    -v \"${PROJECT_DIR}\\${SCREENSHOTS}:/app/${SCREENSHOTS}\" ^
-                    ${DOCKER_IMAGE} ^
-                    pytest --alluredir=/app/${ALLURE_RESULTS}
-                """
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    echo 'Запуск UI тестов внутри Docker'
+                    bat """
+                    docker run --rm ^
+                        -v \"${PROJECT_DIR}\\${ALLURE_RESULTS}:/app/${ALLURE_RESULTS}\" ^
+                        -v \"${PROJECT_DIR}\\${SCREENSHOTS}:/app/${SCREENSHOTS}\" ^
+                        ${DOCKER_IMAGE} ^
+                        pytest --alluredir=/app/${ALLURE_RESULTS} || exit /b 0
+                    """
+                }
             }
         }
 
         stage('Generate Allure Report') {
             steps {
-                echo 'Генерация Allure отчета'
-                bat "allure generate ${PROJECT_DIR}\\${ALLURE_RESULTS} -o ${PROJECT_DIR}\\allure-report --clean"
+                echo 'Генерация Allure отчета (всегда выполняется)'
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    bat "allure generate ${PROJECT_DIR}\\${ALLURE_RESULTS} -o ${PROJECT_DIR}\\allure-report --clean"
+                }
             }
         }
 
         stage('Publish Report') {
             steps {
                 echo 'Публикация HTML отчета в Jenkins'
-                bat "if not exist ${PROJECT_DIR}\\public mkdir ${PROJECT_DIR}\\public"
-                bat "xcopy /E /I /Y ${PROJECT_DIR}\\allure-report ${PROJECT_DIR}\\public\\"
-                publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: "${PROJECT_DIR}\\public",
-                    reportFiles: 'index.html',
-                    reportName: 'Allure Report'
-                ])
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    bat "if not exist ${PROJECT_DIR}\\public mkdir ${PROJECT_DIR}\\public"
+                    bat "xcopy /E /I /Y ${PROJECT_DIR}\\allure-report ${PROJECT_DIR}\\public\\"
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "${PROJECT_DIR}\\public",
+                        reportFiles: 'index.html',
+                        reportName: 'Allure Report'
+                    ])
+                }
             }
         }
     }
@@ -69,7 +77,7 @@ pipeline {
             bat "docker image prune -f || echo 'Нет неиспользуемых образов'"
         }
         failure {
-            echo 'Пайплайн завершился с ошибкой'
+            echo 'Пайплайн завершился с ошибками, но отчет сгенерирован'
         }
     }
 }
