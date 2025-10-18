@@ -1,0 +1,1 @@
+>>> Начинается выполнение теста: test_positive_registration
