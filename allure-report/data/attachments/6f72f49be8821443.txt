@@ -1,0 +1,2 @@
+>>> Начинается выполнение теста: test_function[test25@mail.ru-User2566-qwertyu1]
+Email: test25@mail.ru, Name: User2566, Password: qwertyu1

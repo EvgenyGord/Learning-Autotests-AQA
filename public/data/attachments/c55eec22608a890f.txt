@@ -1,0 +1,1 @@
+>>> Начинается выполнение теста: test_positive_registration_with_fixture_params[registration_data_with_params0]

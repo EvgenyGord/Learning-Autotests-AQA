@@ -38,7 +38,11 @@ def test_positive_registration(browser, base_url, wait, registration_data):
     # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     # driver.get(url)
     with allure.step('Переход на страницу Регистрации'):
+        time.sleep(1)
         browser.get(f"{base_url}/sign_up")
+        WebDriverWait(browser, 10).until(
+            EC.url_contains("/sign_up")
+        )
     #time.sleep(2)
     with allure.step('Заполнение поля email'):
         email_field = wait.until(EC.presence_of_element_located((By.ID, "email")))
@@ -112,7 +116,11 @@ def test_positive_registration_faker(browser, base_url, wait, faker_data):
     # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     # driver.get(url)
     with allure.step('Переход на страницу Регистрации'):
+        time.sleep(1)
         browser.get(f"{base_url}/sign_up")
+        WebDriverWait(browser, 10).until(
+            EC.url_contains("/sign_up")
+        )
     #time.sleep(2)
 
     with allure.step('Заполнение поля email'):
@@ -174,7 +182,11 @@ def test_positive_registration_with_fixture_params(browser, base_url, wait, regi
     # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     # driver.get(url)
     with allure.step('Переход на страницу Регистрации'):
+        time.sleep(1)
         browser.get(f"{base_url}/sign_up")
+        WebDriverWait(browser, 10).until(
+            EC.url_contains("/sign_up")
+        )
     #time.sleep(2)
     with allure.step('Заполнение поля email'):
         email_field = wait.until(EC.presence_of_element_located((By.ID, "email")))

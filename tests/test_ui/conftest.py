@@ -69,8 +69,8 @@ def base_url():
 
 
 @pytest.fixture(params=[
-    {"email": "test2@mail.ru",
-     "name": "User25",
+    {"email": "test123@mail.ru",
+     "name": "Userito123",
      "password": "qwertyu1"},
     {"email": "test3@mail.ru",
      "name": "User26",
