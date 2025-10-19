@@ -40,9 +40,9 @@ pipeline {
             }
         }
 
-        stage('Run UI Tests in Docker') {
+        stage('Run Tests in Docker') {
             steps {
-                echo '🧪 Запуск UI тестов внутри Docker'
+                echo '🧪 Запуск тестов внутри Docker'
                 script {
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         bat """
@@ -52,17 +52,6 @@ pipeline {
                             ${DOCKER_IMAGE} ^
                             pytest --alluredir=/app/${ALLURE_RESULTS}
                         """
-                    }
-                }
-            }
-        }
-
-        stage('Generate Allure Report') {
-            steps {
-                echo '📊 Генерация Allure отчета'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        bat "allure generate ${PROJECT_DIR}\\${ALLURE_RESULTS} -o ${PROJECT_DIR}\\allure-report --clean"
                     }
                 }
             }
@@ -85,8 +74,8 @@ pipeline {
             bat "docker container prune -f || echo 'Нет контейнеров для удаления'"
             bat "docker image prune -f || echo 'Нет неиспользуемых образов'"
         }
-        failure {
-            echo '❌ Пайплайн завершился с ошибкой, но отчёт сгенерирован.'
+        success {
+            echo '✅ Пайплайн завершён успешно! Всеure Report доступен в боковой панели Jenkins.'
         }
-    }
-}
+        failure {
+            echo '❌ Пайплайн завершился с ошибкой, но отчёт Allure доступен для
