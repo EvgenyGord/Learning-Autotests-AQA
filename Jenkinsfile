@@ -7,6 +7,7 @@ pipeline {
         DOCKER_IMAGE = "selenium-tests:latest"
         PROJECT_DIR = "C:\\qaRoad\\my_selenium_test"
         TARGET_URL = "http://31.59.174.108"
+        TEST_DIR = "tests" // папка с тестами внутри проекта
     }
 
     stages {
@@ -19,10 +20,17 @@ pipeline {
             }
         }
 
+        stage('Copy Dockerfile to Workspace') {
+            steps {
+                echo '📄 Копирование Dockerfile в workspace'
+                bat "copy /Y \"${PROJECT_DIR}\\Dockerfile\" \"%WORKSPACE%\\Dockerfile\""
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 echo '🐳 Сборка Docker образа для тестов'
-                bat "docker build -t ${DOCKER_IMAGE} -f \"${PROJECT_DIR}\\Dockerfile\" \"${PROJECT_DIR}\""
+                bat "docker build -t ${DOCKER_IMAGE} -f \"%WORKSPACE%\\Dockerfile\" \"%WORKSPACE%\""
             }
         }
 
@@ -32,26 +40,38 @@ pipeline {
                 script {
                     def result = bat(script: "curl -I ${TARGET_URL}", returnStatus: true)
                     if (result != 0) {
-                        echo "⚠️ Сайт ${TARGET_URL} недоступен. Проверка пропущена, тесты могут упасть."
+                        echo "⚠️ Внимание: сайт ${TARGET_URL} недоступен. Проверка пропущена."
                     } else {
-                        echo "✅ Сайт ${TARGET_URL} доступен, продолжаем."
+                        echo "✅ Сайт ${TARGET_URL} доступен."
                     }
                 }
             }
         }
 
-        stage('Run UI Tests in Docker') {
+        stage('Run Tests in Docker') {
             steps {
-                echo '🧪 Запуск UI тестов внутри Docker'
+                echo '🧪 Запуск тестов внутри Docker'
                 script {
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         bat """
                         docker run --rm ^
-                            -v "${PROJECT_DIR}\\${ALLURE_RESULTS}:/app/${ALLURE_RESULTS}" ^
-                            -v "${PROJECT_DIR}\\${SCREENSHOTS}:/app/${SCREENSHOTS}" ^
+                            -v "%WORKSPACE%\\${ALLURE_RESULTS}:/app/${ALLURE_RESULTS}" ^
+                            -v "%WORKSPACE%\\${SCREENSHOTS}:/app/${SCREENSHOTS}" ^
+                            -v "${PROJECT_DIR}\\${TEST_DIR}:/app/${TEST_DIR}" ^
                             ${DOCKER_IMAGE} ^
-                            pytest --alluredir=/app/${ALLURE_RESULTS}
+                            pytest /app/${TEST_DIR} --alluredir=/app/${ALLURE_RESULTS}
                         """
+                    }
+                }
+            }
+        }
+
+        stage('Generate Allure Report') {
+            steps {
+                echo '📊 Генерация Allure отчета'
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        bat "allure generate %WORKSPACE%\\${ALLURE_RESULTS} -o %WORKSPACE%\\allure-report --clean"
                     }
                 }
             }
@@ -61,8 +81,10 @@ pipeline {
             steps {
                 echo '📢 Публикация Allure отчета через Allure Jenkins Plugin'
                 allure([
-                    results: [[path: "${PROJECT_DIR}\\${ALLURE_RESULTS}"]],
-                    reportBuildPolicy: 'ALWAYS'
+                    includeProperties: false,
+                    jdk: '',
+                    reportBuildPolicy: 'ALWAYS',
+                    results: [[path: "${ALLURE_RESULTS}"]]
                 ])
             }
         }
@@ -71,4 +93,17 @@ pipeline {
     post {
         always {
             echo '🧹 Очистка ресурсов Docker'
-            bat "docker container
+            bat "docker container prune -f || echo 'Нет контейнеров для удаления'"
+            bat "docker image prune -f || echo 'Нет неиспользуемых образов'"
+        }
+        success {
+            echo "✅ Пайплайн завершён успешно! Allure Report доступен на боковой панели Jenkins."
+        }
+        unstable {
+            echo "⚠️ Пайплайн завершён с предупреждениями, но отчёт Allure доступен."
+        }
+        failure {
+            echo "❌ Пайплайн завершился с ошибкой, проверь логи."
+        }
+    }
+}
