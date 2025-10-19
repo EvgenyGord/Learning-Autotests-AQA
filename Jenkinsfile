@@ -40,9 +40,9 @@ pipeline {
             }
         }
 
-        stage('Run Tests in Docker') {
+        stage('Run UI Tests in Docker') {
             steps {
-                echo '🧪 Запуск тестов внутри Docker'
+                echo '🧪 Запуск UI тестов внутри Docker'
                 script {
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         bat """
@@ -71,11 +71,4 @@ pipeline {
     post {
         always {
             echo '🧹 Очистка ресурсов Docker'
-            bat "docker container prune -f || echo 'Нет контейнеров для удаления'"
-            bat "docker image prune -f || echo 'Нет неиспользуемых образов'"
-        }
-        success {
-            echo '✅ Пайплайн завершён успешно! Всеure Report доступен в боковой панели Jenkins.'
-        }
-        failure {
-            echo '❌ Пайплайн завершился с ошибкой, но отчёт Allure доступен для
+            bat "docker container
