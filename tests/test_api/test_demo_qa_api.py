@@ -34,31 +34,46 @@ account_json_data = None
 @pytest.mark.api
 def test_create_user_demo(api_url_demo_qa):
 
-    global account_json_data
 
     json_payload = {
-        "userName": "evgeny_gord444",
+        "userName": "evgeny_gord67917",
         "password": "Qwerty1234&"
     }
     response = requests.post(f'{api_url_demo_qa}/Account/v1/User', json=json_payload)
 
-    account_json_data = response.json()
 
     # assert response.json()['message'] == "Passwords must have at least one non alphanumeric character, one digit ('0'-'9'), one uppercase ('A'-'Z'), one lowercase ('a'-'z'), one special character and Password must be eight characters or longer."
     assert response.status_code == 201 #должно быть 200 по здравому смыслу, чтобы работало сделал 201
-    assert 'userID' in account_json_data
-    print(f"Создан пользователь: {account_json_data}")
+
+    return {
+        'userID': response.json()["userID"]
+    }
 
 def test_account_authorized(api_url_demo_qa):
-    global account_json_data
+
     json_payload = {
-        "userName": "evgeny_gord444",
+        "userName": "evgeny_gord67917",
         "password": "Qwerty1234&"
     }
     response = requests.post(f'{api_url_demo_qa}/Account/v1/Authorized', json=json_payload)
+    assert response.status_code == 200
+
+
+def test_generate_token(api_url_demo_qa):
+    json_payload = {
+        "userName": "evgeny_gord67917",
+        "password": "Qwerty1234&"
+    }
+    response = requests.post(f'{api_url_demo_qa}/Account/v1/GenerateToken', json=json_payload)
 
     assert response.status_code == 200
-    print(account_json_data)
+    print(response.json())
 
+def test_delete_user(api_url_demo_qa):
+    user_id = test_create_user_demo(api_url_demo_qa)['userID']
+    print(user_id)
+    response = requests.delete(f'{api_url_demo_qa}/Account/v1/User/{user_id}')
+    # assert response.status_code == 200
+    print(f"Пользователь {user_id} удален")
 
 

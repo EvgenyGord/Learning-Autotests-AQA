@@ -84,6 +84,8 @@ def test_logout_user(api_url_petstore):
 
 
 
+
+
 # pytest -v -k test_name --alluredir=allure-results --clean-alluredir
 # allure generate allure-results -o allure-report --clean
 # allure open allure-report
