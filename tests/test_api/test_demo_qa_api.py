@@ -1,5 +1,5 @@
 """
-Страница тестирвоания API покрывающая методы
+Страница тестирования API покрывающая методы
 Swagger Demo QA Book Store API
 https://demoqa.com/swagger/#/BookStore/BookStoreV1BooksGet
 """
@@ -8,9 +8,10 @@ import pytest
 import requests
 
 
-account_json_data = None
-
-
+json_payload = {
+        "userName": "evgeny_gord33459",
+        "password": "Qwerty1234&"
+    }
 
 
 @allure.epic("Пользователи")
@@ -35,37 +36,29 @@ account_json_data = None
 def test_create_user_demo(api_url_demo_qa):
 
 
-    json_payload = {
-        "userName": "evgeny_gord2988",
-        "password": "Qwerty1234&"
-    }
-    response = requests.post(f'{api_url_demo_qa}/Account/v1/User', json=json_payload)
+    response = requests.post(f"{api_url_demo_qa}/Account/v1/User", json=json_payload)
 
 
-    # assert response.json()['message'] == "Passwords must have at least one non alphanumeric character, one digit ('0'-'9'), one uppercase ('A'-'Z'), one lowercase ('a'-'z'), one special character and Password must be eight characters or longer."
+    # assert response.json()["message"] == "Passwords must have at least one non alphanumeric character, one digit ('0'-'9'), one uppercase ('A'-'Z'), one lowercase ('a'-'z'), one special character and Password must be eight characters or longer."
     assert response.status_code == 201 #должно быть 200 по здравому смыслу, чтобы работало сделал 201
 
     return {
-        'userID': response.json()["userID"]
+        "userID": response.json()["userID"]
     }
+
 
 def test_account_authorized(api_url_demo_qa):
 
-    json_payload = {
-        "userName": "evgeny_gord2988",
-        "password": "Qwerty1234&"
-    }
-    response = requests.post(f'{api_url_demo_qa}/Account/v1/Authorized', json=json_payload)
+
+    response = requests.post(f"{api_url_demo_qa}/Account/v1/Authorized", json=json_payload)
     assert response.status_code == 200
+    print(f"Получили информацию {response.json()}")
+    print("Пользователь успешно авторизован")
 
 
 def test_generate_token(api_url_demo_qa):
 
-    json_payload = {
-        "userName": "evgeny_gord2988",
-        "password": "Qwerty1234&"
-    }
-    response = requests.post(f'{api_url_demo_qa}/Account/v1/GenerateToken', json=json_payload)
+    response = requests.post(f"{api_url_demo_qa}/Account/v1/GenerateToken", json=json_payload)
 
     assert response.status_code == 200
     print(response.json())
@@ -74,13 +67,33 @@ def test_generate_token(api_url_demo_qa):
     }
 
 
+def test_get_user_info(api_url_demo_qa):
+    user_id = test_create_user_demo(api_url_demo_qa)["userID"]
+    auth_token = test_generate_token(api_url_demo_qa)["token"]
+    headers = {
+        'Authorization': f'Bearer {auth_token}',
+        'accept': 'application/json'
+    }
+    response = requests.get(f"{api_url_demo_qa}/Account/v1/User/{user_id}", headers=headers)
+    print(response.json())
+    assert response.status_code == 200
+    print(f"Получение информации о пользователе {user_id}")
+
 
 def test_delete_user(api_url_demo_qa):
-    user_id = test_create_user_demo(api_url_demo_qa)['userID']
+    user_id = test_create_user_demo(api_url_demo_qa)["userID"]
     print(user_id)
-    response = requests.delete(f'{api_url_demo_qa}/Account/v1/User/{user_id}')
+    response = requests.delete(f"{api_url_demo_qa}/Account/v1/User/{user_id}")
+    print(f"получили {response.json()}")
     # assert response.status_code == 200
     print(f"Пользователь {user_id} удален")
+
+
+"""
+Тесты с рандомными данными(с помощью библиотеки Faker) ниже
+                            |
+                            v
+"""
 
 
 def test_create_user_demo_faker_data(api_url_demo_qa, faker_data):
@@ -89,7 +102,7 @@ def test_create_user_demo_faker_data(api_url_demo_qa, faker_data):
         "userName": faker_data["name"],
         "password": faker_data["password"]
     }
-    response = requests.post(f'{api_url_demo_qa}/Account/v1/User', json=json_payload)
+    response = requests.post(f"{api_url_demo_qa}/Account/v1/User", json=json_payload)
 
 
     # assert response.json()['message'] == "Passwords must have at least one non alphanumeric character, one digit ('0'-'9'), one uppercase ('A'-'Z'), one lowercase ('a'-'z'), one special character and Password must be eight characters or longer."
@@ -99,22 +112,13 @@ def test_create_user_demo_faker_data(api_url_demo_qa, faker_data):
         'userID': response.json()["userID"]
     }
 
-def test_delete_user_faker_data(api_url_demo_qa, faker_data):
-    user_id = test_create_user_demo_faker_data(api_url_demo_qa, faker_data)['userID']
-    print(user_id)
-    response = requests.delete(f'{api_url_demo_qa}/Account/v1/User/{user_id}')
-    # assert response.status_code == 200
-    print(f"Пользователь {user_id} удален")
 
-#Необходимо доделать
-def test_get_user_info(api_url_demo_qa):
-    user_id = test_create_user_demo(api_url_demo_qa)['userID']
-    auth_token = test_generate_token(api_url_demo_qa)["token"]
-    headers = {
-        'Authorization': f'Bearer {auth_token}',
-        'accept': 'application/json'
-    }
-    response = requests.get(f'{api_url_demo_qa}/Account/v1/User/{user_id}', headers=headers)
-    print(response.json())
-    assert response.status_code == 401
-    print(f"Получение информации о пользователе {user_id}")
+def test_delete_user_faker_data(api_url_demo_qa, faker_data):
+    user_id = test_create_user_demo_faker_data(api_url_demo_qa, faker_data)["userID"]
+    print(user_id)
+    response = requests.delete(f"{api_url_demo_qa}/Account/v1/User/{user_id}")
+    print(f"получили {response.json()}")
+    # assert response.status_code == 200
+    print(f"Пользователь {user_id} был успешно создан и удален")
+
+
