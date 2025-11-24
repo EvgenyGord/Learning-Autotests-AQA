@@ -18,11 +18,11 @@ def browser():
     options.add_argument(f"--user-data-dir={user_data_dir}")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--headless")  # если не нужен GUI
+    #options.add_argument("--headless")  # если не нужен GUI
     options.add_argument("--disable-gpu")
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
+    driver.maximize_window() # раскрытие окна браузера в полноэкранном режиме
     yield driver
 
     driver.quit()
@@ -66,7 +66,9 @@ def browser():
 def base_url():
     return "http://31.59.174.108"
 
-
+@pytest.fixture
+def base_url_web_sandbox():
+    return "https://aqa-proka4.org/sandbox/web"
 
 @pytest.fixture(params=[
     {"email": "test123@mail.ru",
