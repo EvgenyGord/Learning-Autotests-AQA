@@ -54,8 +54,9 @@ def test_form_with_validation(browser, base_url_web_sandbox, wait):
             with allure.step("Ввод некорректного username"):
                 username = wait.until(EC.visibility_of_element_located((By.NAME, "val-username")))
                 username.send_keys("test")
-            with allure.step("Нажатие на кнопку, чтобы вызвать проверку валидации"):
-                wait.until(EC.visibility_of_element_located((By.ID, "valSubmitBtn"))).click()
+            with allure.step("Нажатие на кнопку, чтобы вызвать проверку валидации username"):
+                button = wait.until(EC.visibility_of_element_located((By.ID, "valSubmitBtn")))
+                button.click()
             with allure.step("Проверка текста валидации"):
                 username_error = wait.until(EC.visibility_of_element_located((By.ID, "username-error"))).text
                 assert username_error == "Username должен содержать минимум 5 символов"
@@ -63,6 +64,58 @@ def test_form_with_validation(browser, base_url_web_sandbox, wait):
         with allure.step("Заполнение корректного username >=5 символов"):
             username.clear()
             username.send_keys("Username")
+
+    with allure.step("Ввод Email (должен содержать @)"):
+        with allure.step("Проверка валидации поля, негатив"):
+            with allure.step("Ввод некорректного email"):
+                email = wait.until(EC.visibility_of_element_located((By.ID, "val-email")))
+                email.send_keys("test.mail.ru")
+            with allure.step("Нажатие на кнопку, чтобы вызвать проверку валидации"):
+                button.click()
+            with allure.step("Проверка текста валидации поля email"):
+                email_error = wait.until(EC.visibility_of_element_located((By.ID, "email-error"))).text
+                assert email_error == "Email должен содержать символ @"
+
+            with allure.step("Заполнение корректного email (содержит символ @)"):
+                email.clear()
+                email.send_keys("test@mail.ru")
+
+    with allure.step("Ввод Password (минимум 8 символов, буквы и цифры)"):
+        with allure.step("Проверка валидации поля, негатив"):
+            with allure.step("Ввод некорректного password"):
+                password = wait.until(EC.visibility_of_element_located((By.ID, "val-password")))
+                password.send_keys("qwerty1")
+            with allure.step("Нажатие на кнопку, чтобы вызвать проверку валидации"):
+                button.click()
+            with allure.step("Проверка текста валидации поля password"):
+                password_error = wait.until(EC.visibility_of_element_located((By.ID, "password-error"))).text
+                assert password_error == "Password должен содержать минимум 8 символов, включая буквы и цифры"
+
+            with allure.step("Заполнение корректного Password (содержит символ @)"):
+                password.clear()
+                password.send_keys("qwerty123")
+
+    with allure.step("Подтверждение Password"):
+        with allure.step("Проверка валидации поля, негатив"):
+            with allure.step("Ввод некорректного password, который не совпадает"):
+                confirm_password = wait.until(EC.visibility_of_element_located((By.ID, "val-confirm-password")))
+                confirm_password.send_keys("qwerty1")
+            with allure.step("Нажатие на кнопку, чтобы вызвать проверку валидации"):
+                button.click()
+            with allure.step("Проверка текста валидации поля password"):
+                confirm_password_error = wait.until(EC.visibility_of_element_located((By.ID, "confirm-password-error"))).text
+                assert confirm_password_error == "Пароли не совпадают"
+
+            with allure.step("Заполнение корректного Password для подтверждения"):
+                confirm_password.clear()
+                confirm_password.send_keys("qwerty123")
+
+    with allure.step("Проверить и отправить все"):
+        button.click()
+        form_result = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#valFormResult>div>p"))).text
+        assert form_result == "Все проверки пройдены! Форма валидна."
+
+    time.sleep(5)
 
 
 
