@@ -115,7 +115,31 @@ def test_form_with_validation(browser, base_url_web_sandbox, wait):
         form_result = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#valFormResult>div>p"))).text
         assert form_result == "Все проверки пройдены! Форма валидна."
 
-    time.sleep(5)
+
+def test_dinamic_form(browser, base_url_web_sandbox, wait):
+    with allure.step("Позитивный сценарий (основной флоу с отправкой)"):
+        with allure.step("Переход на страницу с формами"):
+            browser.get(f"{base_url_web_sandbox}")
+            WebDriverWait(browser, 10).until(
+                EC.url_to_be(base_url_web_sandbox))
+
+        with allure.step("Ввод имени"):
+            wait.until(EC.visibility_of_element_located((By.ID, "dyn-name"))).send_keys("Евгений")
+
+        with allure.step("Заполнение Email адреса"):
+            wait.until(EC.visibility_of_element_located((By.NAME, "email[]"))).send_keys("evgeny_gord@mail.ru")
+
+        with allure.step("Заполнение Номера телефонов"):
+            wait.until(EC.visibility_of_element_located((By.NAME, "phone[]"))).send_keys("+79999999999")
+
+        with allure.step("Отправка формы"):
+            wait.until(EC.visibility_of_element_located((By.ID, "dynSubmitBtn"))).click()
+
+
+
+
+
+
 
 
 
