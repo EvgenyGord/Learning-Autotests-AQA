@@ -127,13 +127,29 @@ def test_dinamic_form(browser, base_url_web_sandbox, wait):
             wait.until(EC.visibility_of_element_located((By.ID, "dyn-name"))).send_keys("Евгений")
 
         with allure.step("Заполнение Email адреса"):
-            wait.until(EC.visibility_of_element_located((By.NAME, "email[]"))).send_keys("evgeny_gord@mail.ru")
+            wait.until(EC.visibility_of_element_located((By.XPATH, "(//*[@name='email[]'])[1]"))).send_keys("evgeny_gord@mail.ru")
 
         with allure.step("Заполнение Номера телефонов"):
             wait.until(EC.visibility_of_element_located((By.NAME, "phone[]"))).send_keys("+79999999999")
 
         with allure.step("Отправка формы"):
             wait.until(EC.visibility_of_element_located((By.ID, "dynSubmitBtn"))).click()
+
+    with allure.step("Доп. сценарии с формой"):
+        with allure.step("Удаление поля email, когда один элемент"):
+            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='removeEmailField(this)']"))).click()
+            alert = wait.until(EC.alert_is_present())
+            assert alert.text == "Должен остаться хотя бы один email!"
+            alert.accept()
+        with allure.step("Добавление нового email"):
+            with allure.step("Добавление нового поля"):
+                wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='addEmailField()']"))).click()
+            with allure.step("Заполнение нового email"):
+                wait.until(EC.visibility_of_element_located((By.XPATH, "(//*[@name='email[]'])[2]"))).send_keys("test2.0@mail.ru")
+
+
+
+
 
 
 
