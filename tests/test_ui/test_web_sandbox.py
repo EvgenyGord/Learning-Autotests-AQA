@@ -160,7 +160,9 @@ def test_dinamic_form(browser, base_url_web_sandbox, wait):
                 wait.until(EC.visibility_of_element_located((By.ID, "addPhoneBtn"))).click()
             with allure.step("Заполнение дополнительного Номера телефонов"):
                 wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#phoneFields > div:nth-child(2) > input"))).send_keys("+79999999999")
-                time.sleep(5)
+
+        with allure.step("Отправка формы"):
+            wait.until(EC.visibility_of_element_located((By.ID, "dynSubmitBtn"))).click()
 
 
 
@@ -173,10 +175,27 @@ def test_dinamic_form(browser, base_url_web_sandbox, wait):
                 phone_fields = wait.until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "#phoneFields > div > input")))
                 count_phone_fields = len(phone_fields)
 
-        with allure.step("Нахождение формы результата"):
-            wait.until(EC.visibility_of_element_located((By.ID, "dynFormResult")))
+        with allure.step("Проверка, что форма успешно отправлена"):
+            text_success = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>p")))
+            assert text_success.text == "Форма успешно отправлена!"
+        with allure.step("Проверка имени"):
+            name = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>div>p:nth-child(1)>strong")))
+            assert name.text == "Имя:"
+            name_result = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>div>p:nth-child(1)")))
+            assert name_result.text == "Имя: Евгений"
+        with allure.step("Проверка Email"):
+            email = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>div>p:nth-child(2)>strong")))
+            assert email.text == f"Email ({count_email_fields}):"
+            email_result = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>div>p:nth-child(2)")))
+            assert email_result.text == f"Email ({count_email_fields}): evgeny_gord@mail.ru, test2.0@mail.ru"
+        with allure.step("Проверка Номера телефона"):
+            phone = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>div>p:nth-child(3)>strong")))
+            assert phone.text == f"Телефоны ({count_phone_fields}):"
+            phone_results = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dynFormResult>div>div>p:nth-child(3)")))
+            assert phone_results.text == f"Телефоны ({count_phone_fields}): +79999999999, +79999999999"
 
-            #дописать
+
+
 
 
 
