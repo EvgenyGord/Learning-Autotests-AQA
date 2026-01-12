@@ -136,16 +136,47 @@ def test_dinamic_form(browser, base_url_web_sandbox, wait):
             wait.until(EC.visibility_of_element_located((By.ID, "dynSubmitBtn"))).click()
 
     with allure.step("Доп. сценарии с формой"):
-        with allure.step("Удаление поля email, когда один элемент"):
-            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='removeEmailField(this)']"))).click()
-            alert = wait.until(EC.alert_is_present())
-            assert alert.text == "Должен остаться хотя бы один email!"
-            alert.accept()
-        with allure.step("Добавление нового email"):
-            with allure.step("Добавление нового поля"):
-                wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='addEmailField()']"))).click()
-            with allure.step("Заполнение нового email"):
-                wait.until(EC.visibility_of_element_located((By.XPATH, "(//*[@name='email[]'])[2]"))).send_keys("test2.0@mail.ru")
+        with allure.step("Сценарии с email"):
+            with allure.step("Удаление поля email, когда один элемент"):
+                wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='removeEmailField(this)']"))).click()
+                alert = wait.until(EC.alert_is_present())
+                assert alert.text == "Должен остаться хотя бы один email!"
+                alert.accept()
+            with allure.step("Добавление нового email"):
+                with allure.step("Добавление нового поля"):
+                    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='addEmailField()']"))).click()
+                with allure.step("Заполнение нового email"):
+                    wait.until(EC.visibility_of_element_located((By.XPATH, "(//*[@name='email[]'])[2]"))).send_keys("test2.0@mail.ru")
+            with allure.step("Удаление нового email"):
+                wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#emailFields > div:nth-child(2) > button"))).click()
+            with allure.step("Добавление нового email"):
+                with allure.step("Добавление нового поля"):
+                    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[onclick='addEmailField()']"))).click()
+                with allure.step("Заполнение нового email"):
+                    wait.until(EC.visibility_of_element_located((By.XPATH, "(//*[@name='email[]'])[2]"))).send_keys("test2.0@mail.ru")
+
+        with allure.step("Сценарии с номером телефона"):
+            with allure.step("Добавление нового поля номера телефона"):
+                wait.until(EC.visibility_of_element_located((By.ID, "addPhoneBtn"))).click()
+            with allure.step("Заполнение дополнительного Номера телефонов"):
+                wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#phoneFields > div:nth-child(2) > input"))).send_keys("+79999999999")
+                time.sleep(5)
+
+
+
+    with allure.step("Проверка результата"):
+        with allure.step("Подсчет кол-ва заполненных полей"):
+            with allure.step("Поиск заполненных полей email"):
+                email_fields = wait.until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "#emailFields > div > input")))
+                count_email_fields = len(email_fields)
+            with allure.step("Поиск заполненных полей номера телефона"):
+                phone_fields = wait.until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "#phoneFields > div > input")))
+                count_phone_fields = len(phone_fields)
+
+        with allure.step("Нахождение формы результата"):
+            wait.until(EC.visibility_of_element_located((By.ID, "dynFormResult")))
+
+            #дописать
 
 
 
